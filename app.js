@@ -445,7 +445,42 @@ app.post("/addroom", (req, res) => {
         var myData = new Room(room_details);
         myData.save()
             .then(item => {
+                var roomId = 0;
+                Room.find({hotelId:req.session.user._id},function(err,room){
+                    if(err)
+                    {
+                        console.log("Error part:",err);
+                        res.status(500).send();
+            
+                    }
+                    else{
+                        console.log("Roomer:",room[0]._doc._id)
+                        roomId = room[0]._doc._id;
+                    }
+                    var room_reservation_details ={
+                        hotelId             : hotel_id,
+                        roomId              : roomId,
+                        hotel_name          : hotel_name,
+                        hotel_address       : hotel_address,
+                        name                : room_name,
+                        price               : room_price,
+                        amenities           : amenities,
+                        city                : city,
+                        country             : country,
+                        booking_start_date  : [],
+                        booking_end_date    : [],
+                        type                :"room",
+                        available           : "yes"
+                    }
+                var Reservation = new roomReservation(room_reservation_details);
+                Reservation.save()
+                    .then(item => {
                 res.sendFile(__dirname + "/success_hotel.html");
+            })
+            .catch(err => {
+                res.status(400).send("Unable to save to database");
+            });
+            }).sort({_id:-1}).limit(1)
             })
             .catch(err => {
                 res.status(400).send("Unable to save to database");
@@ -489,17 +524,33 @@ app.post("/adduser", (req, res) => {
             cvv         : cvv,
             billing_address: billing_address
         }
+        User.find({username: username},function(err,user){
+            if(err)
+            {
+                console.log("Error part:",err);
+                res.status(500).send();
 
-
-        var myData = new User(account_details);
-        myData.save()
-            .then(item => {
-                res.sendFile(__dirname + "/success.html");
-            })
-            .catch(err => {
-                res.status(400).send("Unable to save to database");
-            });  
     
+            }
+            else{
+                if(user.length > 0)
+                {
+                    res.sendFile(__dirname + "/createaccount.html");
+
+                }
+                else
+                {
+                    var myData = new User(account_details);
+                    myData.save()
+                    .then(item => {
+                        res.sendFile(__dirname + "/success.html");
+                    })
+                    .catch(err => {
+                        res.status(400).send("Unable to save to database");
+                    });  
+                }
+            }  
+        }); 
 });
 
 app.post("/addhoteluser", (req, res) => {
